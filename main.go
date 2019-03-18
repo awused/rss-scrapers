@@ -110,7 +110,7 @@ VolumeLoop:
 			}
 
 			feed.Items = append(feed.Items, &feeds.Item{
-				Title:   fmt.Sprintf("Chapter %d: %s", c.Index, c.Name),
+				Title:   fmt.Sprintf("Chapter %d - %s", c.Index, c.Name),
 				Id:      c.ID,
 				Link:    &feeds.Link{Href: fmt.Sprintf(chapterURLFormat, bookid, c.ID)},
 				Created: now,
