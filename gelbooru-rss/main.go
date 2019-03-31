@@ -158,7 +158,6 @@ func getTitleForImage(db *leveldb.DB, tags []string, id int) string {
 	}
 
 	if len(unsatisfiedTags) > 0 {
-		fmt.Println(unsatisfiedTags)
 		for i := 0; i < len(unsatisfiedTags); i += 50 {
 			j := i + 50
 			if j > len(unsatisfiedTags) {
@@ -203,7 +202,6 @@ func loadMissingTags(db *leveldb.DB, tags []string) {
 	}
 
 	for _, tag := range b {
-		fmt.Println(tag.Tag + " " + tag.Type)
 		err = db.Put([]byte(tag.Tag), []byte(tag.Type), nil)
 		if err != nil {
 			log.Fatalln(err)
