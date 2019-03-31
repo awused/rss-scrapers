@@ -57,34 +57,29 @@ func main() {
 	bookid := os.Args[1]
 	limit, err := strconv.Atoi(os.Args[2])
 	if err != nil {
-		log.Println(err)
-		os.Exit(1)
+		log.Fatalln(err)
 	}
 
 	if limit <= 0 {
-		log.Println("Limit must be greater than 0")
-		os.Exit(1)
+		log.Fatalln("Limit must be greater than 0")
 	}
 
 	url := listURL + bookid
 
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Println(err)
-		os.Exit(1)
+		log.Fatalln(err)
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
-		log.Println(err)
-		os.Exit(1)
+		log.Fatalln(err)
 	}
 
 	var b responseBody
 	err = json.Unmarshal(body, &b)
 	if err != nil {
-		log.Println(err)
-		os.Exit(1)
+		log.Fatalln(err)
 	}
 
 	feed := &feeds.Rss{&feeds.Feed{
@@ -123,8 +118,7 @@ VolumeLoop:
 
 	feedXml, err := xml.Marshal(rssFeed.FeedXml())
 	if err != nil {
-		log.Println(err)
-		os.Exit(1)
+		log.Fatalln(err)
 	}
 
 	fmt.Print(string(feedXml))
