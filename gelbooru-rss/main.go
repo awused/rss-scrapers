@@ -56,7 +56,7 @@ type tagListResponse []struct {
 
 func main() {
 	if len(os.Args) < 2 {
-		log.Fatalln("Specify at least one tag")
+		log.Panic("Specify at least one tag")
 	}
 
 	db := openTagsDB()
@@ -71,20 +71,20 @@ func main() {
 
 	resp, err := http.Get(indexURL)
 	if err != nil {
-		log.Fatalln(err)
+		log.Panic(err)
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
-		log.Fatalln(err)
+		log.Panic(err)
 	}
 
 	var b indexResponse
 	err = json.Unmarshal(body, &b)
 	if err != nil {
-		log.Fatalln(err)
+		log.Panic(err)
 	}
 
 	feed := &feeds.Rss{&feeds.Feed{
@@ -115,7 +115,7 @@ func main() {
 
 	feedXML, err := xml.Marshal(rssFeed.FeedXml())
 	if err != nil {
-		log.Fatalln(err)
+		log.Panic(err)
 	}
 
 	fmt.Print(string(feedXML))
@@ -124,7 +124,7 @@ func main() {
 func openTagsDB() *leveldb.DB {
 	home := os.Getenv("HOME")
 	if home == "" {
-		log.Fatalln("Empty home")
+		log.Panic("Empty home")
 	}
 
 	dir := path.Join(home, ".rss", "geltagdb")
@@ -134,7 +134,7 @@ func openTagsDB() *leveldb.DB {
 		db, err = leveldb.RecoverFile(dir, nil)
 	}
 	if err != nil {
-		log.Fatalln(err)
+		log.Panic(err)
 	}
 	return db
 }
@@ -149,7 +149,7 @@ func getTitleForImage(db *leveldb.DB, tags []string, id int) string {
 		if err == leveldb.ErrNotFound {
 			unsatisfiedTags = append(unsatisfiedTags, t)
 		} else if err != nil {
-			log.Fatalln(err)
+			log.Panic(err)
 		} else {
 			if string(kind) == "character" || string(kind) == "copyright" {
 				relevantTags = append(relevantTags, t)
@@ -170,7 +170,7 @@ func getTitleForImage(db *leveldb.DB, tags []string, id int) string {
 			kind, err := db.Get([]byte(t), nil)
 			if err == leveldb.ErrNotFound {
 			} else if err != nil {
-				log.Fatalln(err)
+				log.Panic(err)
 			} else {
 				if string(kind) == "character" || string(kind) == "copyright" {
 					relevantTags = append(relevantTags, t)
@@ -185,26 +185,26 @@ func getTitleForImage(db *leveldb.DB, tags []string, id int) string {
 func loadMissingTags(db *leveldb.DB, tags []string) {
 	resp, err := http.Get(tagsAPIPrefix + strings.Join(tags, "+"))
 	if err != nil {
-		log.Fatalln(err)
+		log.Panic(err)
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
-		log.Fatalln(err)
+		log.Panic(err)
 	}
 
 	var b tagListResponse
 	err = json.Unmarshal(body, &b)
 	if err != nil {
-		log.Fatalln(err)
+		log.Panic(err)
 	}
 
 	for _, tag := range b {
 		err = db.Put([]byte(tag.Tag), []byte(tag.Type), nil)
 		if err != nil {
-			log.Fatalln(err)
+			log.Panic(err)
 		}
 	}
 }
