@@ -89,7 +89,7 @@ func main() {
 
 	feed := &feeds.Rss{&feeds.Feed{
 		Title:       strings.Join(os.Args[1:], ", "),
-		Link:        &feeds.Link{Href: indexURL},
+		Link:        &feeds.Link{Href: indexURLPrefix + strings.Join(searchTags, "+")},
 		Description: strings.Join(os.Args[1:], ", ") + " - Gelbooru",
 	}}
 
