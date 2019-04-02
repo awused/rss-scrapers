@@ -99,6 +99,9 @@ func main() {
 			log.Panic(err)
 		}
 		title := getTitleForImage(db, strings.Split(p.Tags, " "), p.ID)
+		if title == "" {
+			title = strconv.Itoa(p.ID)
+		}
 
 		feed.Items = append(feed.Items, &feeds.Item{
 			Title:   title,
