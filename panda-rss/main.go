@@ -65,11 +65,7 @@ func main() {
 		log.Panic(err)
 	}
 
-	for i, a := range htmlquery.Find(doc, "//td[contains(@class, 'glname')]//a") {
-		fmt.Println(i)
-		fmt.Println(htmlquery.InnerText(a))
-		fmt.Println(htmlquery.SelectAttr(a, "href"))
-
+	for _, a := range htmlquery.Find(doc, "//td[contains(@class, 'glname')]//a") {
 		div := htmlquery.FindOne(a, "ancestor::td[contains(@class, 'glname')]/..//div[contains(@id, 'posted_')]")
 		posted, err := time.Parse("2006-01-02 15:04", htmlquery.InnerText(div))
 		if err != nil {
@@ -79,7 +75,7 @@ func main() {
 		id := strings.TrimPrefix(htmlquery.SelectAttr(div, "id"), "posted_")
 
 		feed.Items = append(feed.Items, &feeds.Item{
-			Title:   htmlquery.InnerText(a),
+			Title:   htmlquery.InnerText(htmlquery.FindOne(a, "//div[contains(@class, 'glink')]")),
 			Id:      id,
 			Link:    &feeds.Link{Href: htmlquery.SelectAttr(a, "href")},
 			Created: posted,
