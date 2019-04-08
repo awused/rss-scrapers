@@ -98,7 +98,7 @@ func main() {
 		if err != nil {
 			log.Panic(err)
 		}
-		title := getTitleForImage(db, strings.Split(p.Tags, " "), p.ID)
+		title := getTitleForImage(db, strings.Split(p.Tags, " "), p.ID, os.Args[1:])
 		if title == "" {
 			title = strconv.Itoa(p.ID)
 		}
@@ -143,7 +143,8 @@ func openTagsDB() *leveldb.DB {
 }
 
 // May return an empty string if there's no real important tags
-func getTitleForImage(db *leveldb.DB, tags []string, id int) string {
+func getTitleForImage(
+	db *leveldb.DB, tags []string, id int, searchTags []string) string {
 	unsatisfiedTags := []string{}
 	relevantTags := []string{}
 
@@ -154,7 +155,7 @@ func getTitleForImage(db *leveldb.DB, tags []string, id int) string {
 		} else if err != nil {
 			log.Panic(err)
 		} else {
-			if string(kind) == "character" || string(kind) == "copyright" {
+			if includeTag(t, string(kind), searchTags) {
 				relevantTags = append(relevantTags, t)
 			}
 		}
@@ -175,7 +176,7 @@ func getTitleForImage(db *leveldb.DB, tags []string, id int) string {
 			} else if err != nil {
 				log.Panic(err)
 			} else {
-				if string(kind) == "character" || string(kind) == "copyright" {
+				if includeTag(t, string(kind), searchTags) {
 					relevantTags = append(relevantTags, t)
 				}
 			}
@@ -183,6 +184,20 @@ func getTitleForImage(db *leveldb.DB, tags []string, id int) string {
 	}
 
 	return strings.Join(relevantTags, ", ")
+}
+
+func includeTag(tag string, kind string, searchTags []string) bool {
+	if kind != "character" && kind != "copyright" && kind != "artist" {
+		return false
+	}
+
+	for _, v := range searchTags {
+		if tag == v {
+			return false
+		}
+	}
+
+	return true
 }
 
 func loadMissingTags(db *leveldb.DB, tags []string) {

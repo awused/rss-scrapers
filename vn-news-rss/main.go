@@ -48,7 +48,7 @@ func main() {
 	}
 
 	rssFeed := feed.RssFeed()
-	rssFeed.Ttl = 300
+	rssFeed.Ttl = 360
 
 	feedXML, err := xml.Marshal(rssFeed.FeedXml())
 	if err != nil {
