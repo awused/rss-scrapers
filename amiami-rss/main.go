@@ -63,6 +63,10 @@ func main() {
 	now := time.Now()
 
 	for _, p := range b.Items {
+		if p.OrderClosedFlg == 1 {
+			continue
+		}
+
 		feed.Items = append(feed.Items, &feeds.Item{
 			Title:   p.Gname,
 			Id:      p.Gcode,
