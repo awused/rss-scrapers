@@ -19,6 +19,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	defer resp.Body.Close()
 
 	doc, err := htmlquery.Parse(resp.Body)
 	if err != nil {
