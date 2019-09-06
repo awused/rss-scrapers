@@ -41,7 +41,7 @@ func main() {
 		}
 	}
 
-	feed := &feeds.Rss{&feeds.Feed{
+	feed := &feeds.Rss{Feed: &feeds.Feed{
 		Title: title,
 		Link:  &feeds.Link{Href: searchURL},
 	}}
