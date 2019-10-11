@@ -26,10 +26,11 @@ func main() {
 		log.Panic(err)
 	}
 
-	feed := &feeds.Rss{&feeds.Feed{
-		Title: "Visual Novel Translation Status",
-		Link:  &feeds.Link{Href: url},
-	}}
+	feed := &feeds.Rss{
+		Feed: &feeds.Feed{
+			Title: "Visual Novel Translation Status",
+			Link:  &feeds.Link{Href: url},
+		}}
 
 	now := time.Now()
 
