@@ -102,6 +102,7 @@ func main() {
 		if title == "" {
 			title = strconv.Itoa(p.ID)
 		}
+		title = title + " - " + p.Hash
 
 		feed.Items = append(feed.Items, &feeds.Item{
 			Title:   title,
