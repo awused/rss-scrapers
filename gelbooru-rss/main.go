@@ -36,7 +36,7 @@ type indexResponse []struct {
 	Owner        string      `json:"owner"`
 	ParentID     interface{} `json:"parent_id"`
 	Rating       string      `json:"rating"`
-	Sample       bool        `json:"sample"`
+	Sample       int         `json:"sample"`
 	SampleHeight int         `json:"sample_height"`
 	SampleWidth  int         `json:"sample_width"`
 	Score        int         `json:"score"`
@@ -113,9 +113,7 @@ func main() {
 	}
 
 	rssFeed := feed.RssFeed()
-	// 3 hour TTL, these don't update a lot and it's a waste of bandwidth since
-	// they don't use any compression
-	rssFeed.Ttl = 180
+	rssFeed.Ttl = 60
 
 	feedXML, err := xml.Marshal(rssFeed.FeedXml())
 	if err != nil {
