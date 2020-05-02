@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/xml"
+	"flag"
 	"fmt"
 	"log"
 	"net/url"
@@ -17,14 +18,24 @@ import (
 
 // TODO -- maximum complexity of a search
 // TODO -- time limit
+// TODO -- Rename as a more general Nyaa rss tool
 
+// As far as I can tell two structures is the only type-safe way to do this.
 type config map[string][]string
+
+type titleConfig struct {
+	Title string
+}
 
 var quarterRe = regexp.MustCompile(`^(\d{4})[Qq]([1-4])$`)
 
 func main() {
+	flag.Parse()
+
 	var conf config
+	var titleConf titleConfig
 	awconf.LoadConfig("seasonal-anime-rss", &conf)
+	awconf.LoadConfig("seasonal-anime-rss", &titleConf)
 
 	searches := []string{}
 
@@ -59,7 +70,7 @@ func main() {
 	}
 
 	feed := &feeds.Rss{Feed: &feeds.Feed{
-		Title: "Seasonal Anime Torrents",
+		Title: titleConf.Title,
 		Link:  &feeds.Link{Href: "https://nyaa.si/?q=" + query},
 	}}
 
