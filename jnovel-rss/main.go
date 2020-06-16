@@ -8,12 +8,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gorilla/feeds"
 )
 
-type responseBody struct {
+type seriesBody struct {
 	Title               string    `json:"title"`
 	Titleslug           string    `json:"titleslug"`
 	TitleShort          string    `json:"titleShort"`
@@ -115,10 +116,30 @@ type responseBody struct {
 	} `json:"parts"`
 }
 
+type eventsBody []struct {
+	Name         string    `json:"name"`
+	Details      string    `json:"details"`
+	SeriesType   string    `json:"seriesType"`
+	LinkFragment string    `json:"linkFragment"`
+	Date         time.Time `json:"date"`
+	Attachments  []struct {
+		Fullpath   string `json:"fullpath"`
+		Size       int    `json:"size"`
+		ID         string `json:"id"`
+		IsImage    bool   `json:"isImage"`
+		Extension  string `json:"extension"`
+		ModelType  string `json:"modelType"`
+		ForeignKey string `json:"foreignKey"`
+		Filename   string `json:"filename"`
+	} `json:"attachments"`
+	ID string `json:"id"`
+}
+
 const urlFormat = `https://api.j-novel.club/api/series/findOne?filter={"where":{"titleslug":"%s"},"include":["volumes","parts"]}`
 
+const eventsUrl = "https://api.j-novel.club/api/events?filter[limit]=500"
 const seriesPage = `https://j-novel.club/s/`
-const chapterPage = `https://j-novel.club/c/`
+const host = `https://j-novel.club`
 
 func main() {
 	if len(os.Args) < 2 {
@@ -139,13 +160,13 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	var b responseBody
+	var b seriesBody
 	err = json.Unmarshal(body, &b)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	feed := &feeds.Rss{&feeds.Feed{
+	feed := &feeds.Rss{Feed: &feeds.Feed{
 		Title:       b.Title,
 		Link:        &feeds.Link{Href: seriesPage + titleSlug},
 		Description: b.DescriptionShort,
@@ -153,17 +174,25 @@ func main() {
 
 	now := time.Now()
 
+	finalChapters := getFinalChapters()
+
 	// TODO -- also include volumes?
 	for i := range b.Parts {
 		p := b.Parts[len(b.Parts)-i-1]
 		if p.Expired {
 			continue
 		}
+		chapterFragment := "/c/" + p.Titleslug
+		title := p.Title
+
+		if finalChapters[chapterFragment] {
+			title = title + " FINAL"
+		}
 
 		feed.Items = append(feed.Items, &feeds.Item{
-			Title:   p.Title,
+			Title:   title,
 			Id:      p.Titleslug,
-			Link:    &feeds.Link{Href: chapterPage + p.Titleslug},
+			Link:    &feeds.Link{Href: host + chapterFragment},
 			Created: now,
 		})
 	}
@@ -177,4 +206,34 @@ func main() {
 	}
 
 	fmt.Print(string(feedXml))
+}
+
+// This only gets recent final chapters but that's good enough
+// to tip off a human that the current volume is done.
+func getFinalChapters() map[string]bool {
+	out := make(map[string]bool)
+
+	resp, err := http.Get(eventsUrl)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	var b eventsBody
+	err = json.Unmarshal(body, &b)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	for _, e := range b {
+		if strings.HasSuffix(e.Details, "FINAL") {
+			out[e.LinkFragment] = true
+		}
+	}
+
+	return out
 }
