@@ -87,7 +87,7 @@ func main() {
 		log.Panic(err)
 	}
 
-	feed := &feeds.Rss{&feeds.Feed{
+	feed := &feeds.Rss{Feed: &feeds.Feed{
 		Title:       strings.Join(os.Args[1:], ", "),
 		Link:        &feeds.Link{Href: indexURLPrefix + strings.Join(searchTags, "+")},
 		Description: strings.Join(os.Args[1:], ", ") + " - Gelbooru",

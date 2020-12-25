@@ -1,11 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
+	"os/exec"
 	"time"
 
 	"github.com/antchfx/htmlquery"
@@ -16,6 +17,14 @@ const fictionHost = "https://www.fictionpress.com"
 const fanfictionHost = "https://www.fanfiction.net"
 
 const storyURLFormat = "%s/s/%s"
+
+const fetchScript = `
+import cloudscraper
+import sys
+
+scraper = cloudscraper.create_scraper()
+print(scraper.get(sys.argv[1]).text)
+`
 
 // First arg is fiction/fanfiction
 // second arg is story ID
@@ -37,21 +46,22 @@ func main() {
 
 	storyURL := fmt.Sprintf(storyURLFormat, host, storyID)
 
-	resp, err := http.Get(storyURL)
+	resp, err :=
+		exec.Command("python3", "-c", fetchScript, storyURL).CombinedOutput()
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer resp.Body.Close()
 
-	doc, err := htmlquery.Parse(resp.Body)
+	doc, err := htmlquery.Parse(bytes.NewReader(resp))
 	if err != nil {
 		log.Panic(err)
 	}
 
+	fmt.Println(resp)
 	title := htmlquery.InnerText(
 		htmlquery.FindOne(doc, "//div[@id='profile_top']/b"))
 
-	feed := &feeds.Rss{&feeds.Feed{
+	feed := &feeds.Rss{Feed: &feeds.Feed{
 		Title: title,
 		Link:  &feeds.Link{Href: storyURL},
 	}}
