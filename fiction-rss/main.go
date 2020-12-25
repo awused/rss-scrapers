@@ -57,7 +57,6 @@ func main() {
 		log.Panic(err)
 	}
 
-	fmt.Println(resp)
 	title := htmlquery.InnerText(
 		htmlquery.FindOne(doc, "//div[@id='profile_top']/b"))
 
