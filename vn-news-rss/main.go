@@ -43,7 +43,7 @@ func main() {
 
 		feed.Items = append(feed.Items, &feeds.Item{
 			Title:   text,
-			Id:      htmlquery.SelectAttr(a, "id"),
+			Id:      htmlquery.SelectAttr(a, "href"),
 			Link:    &feeds.Link{Href: htmlquery.SelectAttr(a, "href")},
 			Created: now,
 		})
