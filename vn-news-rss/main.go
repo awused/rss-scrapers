@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/feeds"
 )
 
-const url = "https://erogegames.com/eroge-visual-novels/eroge-news/"
+const url = "https://erogegames.com/forums/forum/14-eroge-news/"
 
 func main() {
 	resp, err := http.Get(url)
@@ -34,9 +34,9 @@ func main() {
 
 	now := time.Now()
 
-	for _, a := range htmlquery.Find(doc, "//a[contains(@id, 'thread_title_')]") {
+	for _, a := range htmlquery.Find(doc, "//a[contains(@title, 'Visual Novel Translation')]") {
 
-		text := htmlquery.InnerText(a)
+		text := htmlquery.SelectAttr(a, "title")
 		if strings.Contains(text, "H-RPG") {
 			continue
 		}
