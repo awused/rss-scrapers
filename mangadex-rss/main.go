@@ -41,24 +41,22 @@ func (st *stringable) UnmarshalJSON(b []byte) error {
 }
 
 type mangaChapter struct {
-	Result string `json:"result"`
-	Data   struct {
-		ID         string `json:"id"`
-		Type       string `json:"type"`
-		Attributes struct {
-			Volume             *stringable `json:"volume"`
-			Chapter            stringable  `json:"chapter"`
-			Title              *string     `json:"title"`
-			TranslatedLanguage string      `json:"translatedLanguage"`
-			Hash               string      `json:"hash"`
-			Data               []string    `json:"data"`
-			DataSaver          []string    `json:"dataSaver"`
-			PublishAt          time.Time   `json:"publishAt"`
-			CreatedAt          time.Time   `json:"createdAt"`
-			UpdatedAt          interface{} `json:"updatedAt"`
-			Version            int         `json:"version"`
-		} `json:"attributes"`
-	} `json:"data"`
+	ID         string `json:"id"`
+	Type       string `json:"type"`
+	Attributes struct {
+		Volume             *stringable `json:"volume"`
+		Chapter            stringable  `json:"chapter"`
+		Title              *string     `json:"title"`
+		TranslatedLanguage string      `json:"translatedLanguage"`
+		Hash               string      `json:"hash"`
+		Data               []string    `json:"data"`
+		DataSaver          []string    `json:"dataSaver"`
+		ExternalURL        interface{} `json:"externalUrl"`
+		PublishAt          time.Time   `json:"publishAt"`
+		CreatedAt          time.Time   `json:"createdAt"`
+		UpdatedAt          time.Time   `json:"updatedAt"`
+		Version            int         `json:"version"`
+	} `json:"attributes"`
 	Relationships []struct {
 		ID   string `json:"id"`
 		Type string `json:"type"`
@@ -66,10 +64,12 @@ type mangaChapter struct {
 }
 
 type chaptersResponse struct {
-	Results []mangaChapter `json:"results"`
-	Limit   int            `json:"limit"`
-	Offset  int            `json:"offset"`
-	Total   int            `json:"total"`
+	Result   string         `json:"result"`
+	Response string         `json:"response"`
+	Data     []mangaChapter `json:"data"`
+	Limit    int            `json:"limit"`
+	Offset   int            `json:"offset"`
+	Total    int            `json:"total"`
 }
 
 type mangaMetadata struct {
@@ -164,13 +164,13 @@ func getAllChapters(mid string) ([]mangaChapter, error) {
 			return nil, err
 		}
 
-		chapters = append(chapters, cr.Results...)
+		chapters = append(chapters, cr.Data...)
 		total = cr.Total
 
-		if len(cr.Results) != pageSize && offset+len(cr.Results) < total {
+		if len(cr.Data) != pageSize && offset+len(cr.Data) < total {
 			log.Warningf("Manga %s: invalid chapter pagination. "+
 				"Requested %d chapters at offset %d with %d total but got %d\n",
-				mid, pageSize, offset, total, len(cr.Results))
+				mid, pageSize, offset, total, len(cr.Data))
 		}
 
 		offset += pageSize
@@ -236,19 +236,19 @@ func main() {
 
 	for _, c := range chapters {
 		t := title + " - "
-		if c.Data.Attributes.Volume != nil {
-			t += "Volume " + (string)(*c.Data.Attributes.Volume) + ", "
+		if c.Attributes.Volume != nil {
+			t += "Volume " + (string)(*c.Attributes.Volume) + ", "
 		}
-		t += "Chapter " + (string)(c.Data.Attributes.Chapter)
+		t += "Chapter " + (string)(c.Attributes.Chapter)
 
 		// Old mangadex feeds used the chapter URL as the key.
-		url := "https://mangadex.org/chapter/" + c.Data.ID
+		url := "https://mangadex.org/chapter/" + c.ID
 
 		feed.Items = append(feed.Items, &feeds.Item{
 			Title:   t,
 			Id:      url,
 			Link:    &feeds.Link{Href: url},
-			Created: c.Data.Attributes.CreatedAt,
+			Created: c.Attributes.CreatedAt,
 		})
 	}
 
