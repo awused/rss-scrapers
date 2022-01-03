@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"strconv"
 	"strings"
 	"time"
 
@@ -25,25 +24,24 @@ const tagsAPIPrefix = "https://gelbooru.com/index.php?page=dapi&s=tag&q=index&js
 const hrefPrefix = "https://gelbooru.com/index.php?page=post&s=view&id="
 const gelbooruRoot = "https://gelbooru.com/"
 
-type indexResponse []struct {
-	Source       string      `json:"source"`
-	Directory    string      `json:"directory"`
-	Hash         string      `json:"hash"`
-	Height       int         `json:"height"`
-	ID           int         `json:"id"`
-	Image        string      `json:"image"`
-	Change       int         `json:"change"`
-	Owner        string      `json:"owner"`
-	ParentID     interface{} `json:"parent_id"`
-	Rating       string      `json:"rating"`
-	Sample       int         `json:"sample"`
-	SampleHeight int         `json:"sample_height"`
-	SampleWidth  int         `json:"sample_width"`
-	Score        int         `json:"score"`
-	Tags         string      `json:"tags"`
-	Width        int         `json:"width"`
-	FileURL      string      `json:"file_url"`
-	CreatedAt    string      `json:"created_at"`
+type indexResponse struct {
+	Attributes struct {
+		Limit  string `json:"limit"`
+		Offset string `json:"offset"`
+		Count  string `json:"count"`
+	} `json:"@attributes"`
+	Post []struct {
+		ID            string `json:"id"`
+		CreatedAt     string `json:"created_at"`
+		Md5           string `json:"md5"`
+		Image         string `json:"image"`
+		PreviewHeight string `json:"preview_height"`
+		PreviewWidth  string `json:"preview_width"`
+		Tags          string `json:"tags"`
+		Status        string `json:"status"`
+		PostLocked    string `json:"post_locked"`
+		HasChildren   string `json:"has_children"`
+	} `json:"post"`
 }
 
 type tagListResponse []struct {
@@ -84,7 +82,7 @@ func main() {
 	var b indexResponse
 	err = json.Unmarshal(body, &b)
 	if err != nil {
-		log.Panic(err)
+		log.Panic(indexURL, err)
 	}
 
 	feed := &feeds.Rss{Feed: &feeds.Feed{
@@ -93,21 +91,21 @@ func main() {
 		Description: strings.Join(os.Args[1:], ", ") + " - Gelbooru",
 	}}
 
-	for _, p := range b {
+	for _, p := range b.Post {
 		createdAt, err := time.Parse(time.RubyDate, p.CreatedAt)
 		if err != nil {
 			log.Panic(err)
 		}
 		title := getTitleForImage(db, strings.Split(p.Tags, " "), p.ID, os.Args[1:])
 		if title == "" {
-			title = strconv.Itoa(p.ID)
+			title = p.ID
 		}
-		title = title + " - " + p.Hash
+		title = title + " - " + p.Md5
 
 		feed.Items = append(feed.Items, &feeds.Item{
 			Title:   title,
-			Id:      strconv.Itoa(p.ID),
-			Link:    &feeds.Link{Href: hrefPrefix + strconv.Itoa(p.ID)},
+			Id:      p.ID,
+			Link:    &feeds.Link{Href: hrefPrefix + p.ID},
 			Created: createdAt,
 		})
 	}
@@ -143,7 +141,7 @@ func openTagsDB() *leveldb.DB {
 
 // May return an empty string if there's no real important tags
 func getTitleForImage(
-	db *leveldb.DB, tags []string, id int, searchTags []string) string {
+	db *leveldb.DB, tags []string, id string, searchTags []string) string {
 	unsatisfiedTags := []string{}
 	relevantTags := []string{}
 
