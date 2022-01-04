@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,22 +26,14 @@ const hrefPrefix = "https://gelbooru.com/index.php?page=post&s=view&id="
 const gelbooruRoot = "https://gelbooru.com/"
 
 type indexResponse struct {
-	Attributes struct {
-		Limit  string `json:"limit"`
-		Offset string `json:"offset"`
-		Count  string `json:"count"`
-	} `json:"@attributes"`
 	Post []struct {
-		ID            string `json:"id"`
-		CreatedAt     string `json:"created_at"`
-		Md5           string `json:"md5"`
-		Image         string `json:"image"`
-		PreviewHeight string `json:"preview_height"`
-		PreviewWidth  string `json:"preview_width"`
-		Tags          string `json:"tags"`
-		Status        string `json:"status"`
-		PostLocked    string `json:"post_locked"`
-		HasChildren   string `json:"has_children"`
+		ID          int    `json:"id"`
+		CreatedAt   string `json:"created_at"`
+		Md5         string `json:"md5"`
+		Image       string `json:"image"`
+		Tags        string `json:"tags"`
+		Status      string `json:"status"`
+		HasChildren string `json:"has_children"`
 	} `json:"post"`
 }
 
@@ -92,20 +85,21 @@ func main() {
 	}}
 
 	for _, p := range b.Post {
+		id := strconv.Itoa(p.ID)
 		createdAt, err := time.Parse(time.RubyDate, p.CreatedAt)
 		if err != nil {
 			log.Panic(err)
 		}
-		title := getTitleForImage(db, strings.Split(p.Tags, " "), p.ID, os.Args[1:])
+		title := getTitleForImage(db, strings.Split(p.Tags, " "), id, os.Args[1:])
 		if title == "" {
-			title = p.ID
+			title = id
 		}
 		title = title + " - " + p.Md5
 
 		feed.Items = append(feed.Items, &feeds.Item{
 			Title:   title,
-			Id:      p.ID,
-			Link:    &feeds.Link{Href: hrefPrefix + p.ID},
+			Id:      id,
+			Link:    &feeds.Link{Href: hrefPrefix + id},
 			Created: createdAt,
 		})
 	}
