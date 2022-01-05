@@ -82,22 +82,7 @@ type mangaMetadata struct {
 			AltTitles []struct {
 				En string `json:"en"`
 			} `json:"altTitles"`
-			Description struct {
-				En string `json:"en"`
-			} `json:"description"`
-			IsLocked bool `json:"isLocked"`
-			Links    struct {
-				Al    string `json:"al"`
-				Ap    string `json:"ap"`
-				Bw    string `json:"bw"`
-				Kt    string `json:"kt"`
-				Mu    string `json:"mu"`
-				Amz   string `json:"amz"`
-				Ebj   string `json:"ebj"`
-				Mal   string `json:"mal"`
-				Raw   string `json:"raw"`
-				Engtl string `json:"engtl"`
-			} `json:"links"`
+			IsLocked               bool        `json:"isLocked"`
 			OriginalLanguage       string      `json:"originalLanguage"`
 			LastVolume             interface{} `json:"lastVolume"`
 			LastChapter            string      `json:"lastChapter"`
@@ -105,19 +90,9 @@ type mangaMetadata struct {
 			Status                 string      `json:"status"`
 			Year                   interface{} `json:"year"`
 			ContentRating          string      `json:"contentRating"`
-			Tags                   []struct {
-				ID         string `json:"id"`
-				Type       string `json:"type"`
-				Attributes struct {
-					Name struct {
-						En string `json:"en"`
-					} `json:"name"`
-					Version int `json:"version"`
-				} `json:"attributes"`
-			} `json:"tags"`
-			CreatedAt time.Time   `json:"createdAt"`
-			UpdatedAt interface{} `json:"updatedAt"`
-			Version   int         `json:"version"`
+			CreatedAt              time.Time   `json:"createdAt"`
+			UpdatedAt              interface{} `json:"updatedAt"`
+			Version                int         `json:"version"`
 		} `json:"attributes"`
 	} `json:"data"`
 	Relationships []struct {
