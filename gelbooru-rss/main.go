@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"html"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -37,12 +38,14 @@ type indexResponse struct {
 	} `json:"post"`
 }
 
-type tagListResponse []struct {
-	ID        string `json:"id"`
-	Tag       string `json:"tag"`
-	Count     string `json:"count"`
-	Type      string `json:"type"`
-	Ambiguous string `json:"ambiguous"`
+type tagListResponse struct {
+	Tag []struct {
+		ID        int    `json:"id"`
+		Name      string `json:"name"`
+		Count     int    `json:"count"`
+		Type      int    `json:"type"`
+		Ambiguous int    `json:"ambiguous"`
+	} `json:"tag"`
 }
 
 func main() {
@@ -75,7 +78,7 @@ func main() {
 	var b indexResponse
 	err = json.Unmarshal(body, &b)
 	if err != nil {
-		log.Panic(indexURL, err)
+		log.Panic(indexURL, "\n", err)
 	}
 
 	feed := &feeds.Rss{Feed: &feeds.Feed{
@@ -191,8 +194,26 @@ func includeTag(tag string, kind string, searchTags []string) bool {
 	return true
 }
 
+var tagTypes = map[int]string{
+	0: "tag",
+	1: "artist",
+	3: "copyright",
+	4: "character",
+	5: "metadata",
+	6: "deprecated",
+}
+
 func loadMissingTags(db *leveldb.DB, tags []string) {
-	resp, err := http.Get(tagsAPIPrefix + strings.Join(tags, "+"))
+	escaped := []string{}
+
+	for _, t := range tags {
+		// Yes this is as dumb as it looks
+		escaped = append(escaped, url.QueryEscape(html.UnescapeString(html.UnescapeString(t))))
+	}
+
+	url := tagsAPIPrefix + strings.Join(escaped, "+")
+
+	resp, err := http.Get(url)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -207,11 +228,12 @@ func loadMissingTags(db *leveldb.DB, tags []string) {
 	var b tagListResponse
 	err = json.Unmarshal(body, &b)
 	if err != nil {
-		log.Panic(err)
+		log.Panic(url, "\n", err)
 	}
 
-	for _, tag := range b {
-		err = db.Put([]byte(tag.Tag), []byte(tag.Type), nil)
+	for _, tag := range b.Tag {
+		// Still as dumb as it looks
+		err = db.Put([]byte(html.EscapeString(tag.Name)), []byte(tagTypes[tag.Type]), nil)
 		if err != nil {
 			log.Panic(err)
 		}
