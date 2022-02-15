@@ -19,6 +19,7 @@ import (
 const popularPages = 5
 
 const trendingUrl = "https://www.royalroad.com/fictions/trending"
+const risingUrl = "https://www.royalroad.com/fictions/rising-stars"
 const popularUrl = "https://www.royalroad.com/fictions/weekly-popular?page="
 const urlPrefix = "https://www.royalroad.com/fiction/"
 
@@ -68,6 +69,8 @@ func main() {
 		}}
 
 	feed.Items = append(feed.Items, getFictions(trendingUrl)...)
+
+	feed.Items = append(feed.Items, getFictions(risingUrl)...)
 
 	for i := 0; i < popularPages; i++ {
 		pageUrl := popularUrl + strconv.Itoa(i+1)
