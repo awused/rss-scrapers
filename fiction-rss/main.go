@@ -4,83 +4,68 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"os"
-	"os/exec"
 	"time"
 
 	"github.com/antchfx/htmlquery"
 	"github.com/gorilla/feeds"
 )
 
-const fictionHost = "https://www.fictionpress.com"
-const fanfictionHost = "https://www.fanfiction.net"
+const host = "https://archiveofourown.org"
+const indexURLFormat = host + "/works/%s/navigate"
 
-const storyURLFormat = "%s/s/%s"
-
-const fetchScript = `
-import cloudscraper
-import sys
-
-scraper = cloudscraper.create_scraper()
-print(scraper.get(sys.argv[1]).text)
-`
-
-// First arg is fiction/fanfiction
-// second arg is story ID
+// Arg is work ID
 func main() {
-	if len(os.Args) < 3 {
-		log.Panic("Specify fiction/fanfiction and story ID")
+	if len(os.Args) < 2 {
+		log.Panic("Specify story ID")
 	}
 
-	host := ""
-	storyID := os.Args[2]
+	id := os.Args[1]
+	indexURL := fmt.Sprintf(indexURLFormat, id)
 
-	if os.Args[1] == "fiction" {
-		host = fictionHost
-	} else if os.Args[1] == "fanfiction" {
-		host = fanfictionHost
-	} else {
-		log.Panic("Specify fiction/fanfiction")
-	}
-
-	storyURL := fmt.Sprintf(storyURLFormat, host, storyID)
-
-	resp, err :=
-		exec.Command("python3", "-c", fetchScript, storyURL).CombinedOutput()
+	resp, err := http.Get(indexURL)
 	if err != nil {
-		log.Fatalln(err)
+		log.Panic(err)
+	}
+	defer resp.Body.Close()
+
+	byteBody, err := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		log.Panic(err)
 	}
 
-	doc, err := htmlquery.Parse(bytes.NewReader(resp))
+	doc, err := htmlquery.Parse(bytes.NewReader(byteBody))
 	if err != nil {
 		log.Panic(err)
 	}
 
 	title := htmlquery.InnerText(
-		htmlquery.FindOne(doc, "//div[@id='profile_top']/b"))
+		htmlquery.FindOne(doc, "//h2[@class='heading']/a[1]"))
 
 	feed := &feeds.Rss{Feed: &feeds.Feed{
 		Title: title,
-		Link:  &feeds.Link{Href: storyURL},
+		Link:  &feeds.Link{Href: indexURL},
 	}}
 
+	// Page does contain dates but not times, using "now" blindly is easier and ensures correct sorting of new items.
 	now := time.Now()
 
-	// htmlquery doesn't handle this properly if it's just one expression
-	selectEl := htmlquery.FindOne(doc, "//select[@id='chap_select'][1]")
-	chapters := htmlquery.Find(selectEl, "option")
+	chapters := htmlquery.Find(doc, "//ol[contains(@class, 'chapter')]/li/a")
 
 	for i := range chapters {
 		chap := chapters[len(chapters)-i-1]
 
 		text := htmlquery.InnerText(chap)
-		value := htmlquery.SelectAttr(chap, "value")
+		href := htmlquery.SelectAttr(chap, "href")
 
 		feed.Items = append(feed.Items, &feeds.Item{
 			Title:   text,
-			Id:      value,
-			Link:    &feeds.Link{Href: storyURL + "/" + value},
+			Id:      href,
+			Link:    &feeds.Link{Href: host + href},
 			Created: now,
 		})
 	}
