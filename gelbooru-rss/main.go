@@ -173,6 +173,8 @@ func openTagsDB() *leveldb.DB {
 	return db
 }
 
+const BATCH_SIZE = 50
+
 // May return an empty string if there's no real important tags
 func getTitleForImage(
 	db *leveldb.DB, tags []string, id string, searchTags []string) string {
@@ -193,12 +195,13 @@ func getTitleForImage(
 	}
 
 	if len(unsatisfiedTags) > 0 {
-		for i := 0; i < len(unsatisfiedTags); i += 50 {
-			j := i + 50
+		for i := 0; i < len(unsatisfiedTags); i += BATCH_SIZE {
+			j := i + BATCH_SIZE
 			if j > len(unsatisfiedTags) {
 				j = len(unsatisfiedTags)
 			}
 			loadMissingTags(db, unsatisfiedTags[i:j])
+			<-time.After(1 * time.Second)
 		}
 
 		for _, t := range unsatisfiedTags {
@@ -244,8 +247,8 @@ func loadMissingTags(db *leveldb.DB, tags []string) {
 	escaped := []string{}
 
 	for _, t := range tags {
-		// Yes this is as dumb as it looks
-		escaped = append(escaped, url.QueryEscape(html.UnescapeString(html.UnescapeString(t))))
+		// fmt.Println(t, html.UnescapeString(t), url.QueryEscape(html.UnescapeString(t)))
+		escaped = append(escaped, url.QueryEscape(t))
 	}
 
 	url := fmt.Sprintf(tagsAPIFormat, apiKey, strings.Join(escaped, "+"))
@@ -265,12 +268,14 @@ func loadMissingTags(db *leveldb.DB, tags []string) {
 	var b tagListResponse
 	err = json.Unmarshal(body, &b)
 	if err != nil {
-		log.Panic(url, "\n", err)
+		log.Panic(url, "\n", err, "\n", string(body))
 	}
 
 	for _, tag := range b.Tag {
 		// Still as dumb as it looks
-		err = db.Put([]byte(html.EscapeString(tag.Name)), []byte(tagTypes[tag.Type]), nil)
+		unescaped := html.UnescapeString(tag.Name)
+		// fmt.Println(unescaped)
+		err = db.Put([]byte(unescaped), []byte(tagTypes[tag.Type]), nil)
 		if err != nil {
 			log.Panic(err)
 		}
