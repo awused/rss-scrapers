@@ -137,7 +137,7 @@ type eventsBody []struct {
 
 const urlFormat = `https://api.j-novel.club/api/series/findOne?filter={"where":{"titleslug":"%s"},"include":["volumes","parts"]}`
 
-const eventsUrl = "https://api.j-novel.club/api/events?filter[limit]=500"
+const eventsUrl = "https://api.j-novel.club/api/events?filter[limit]=100&filter[where][serieId]="
 const seriesPage = `https://j-novel.club/s/`
 const host = `https://j-novel.club`
 
@@ -174,7 +174,7 @@ func main() {
 
 	now := time.Now()
 
-	finalChapters := getFinalChapters()
+	finalChapters := getFinalChapters(b.ID)
 
 	// TODO -- also include volumes?
 	for i := range b.Parts {
@@ -210,10 +210,10 @@ func main() {
 
 // This only gets recent final chapters but that's good enough
 // to tip off a human that the current volume is done.
-func getFinalChapters() map[string]bool {
+func getFinalChapters(id string) map[string]bool {
 	out := make(map[string]bool)
 
-	resp, err := http.Get(eventsUrl)
+	resp, err := http.Get(eventsUrl + id)
 	if err != nil {
 		log.Fatalln(err)
 	}
