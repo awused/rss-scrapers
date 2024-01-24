@@ -1,5 +1,6 @@
 use clap::Parser;
 
+mod ao3;
 mod jnovel;
 
 #[derive(Debug, Parser)]
@@ -18,6 +19,13 @@ pub struct Opt {
 
 #[derive(Debug, Parser)]
 enum Command {
+    /// Archive Of Our Own
+    Ao3 {
+        /// The story id from the URL.
+        /// https://archiveofourown.org/works/1234 has a story id of 1234
+        #[arg(allow_hyphen_values = true)]
+        story_id: String,
+    },
     /// Jnovel-club series
     Jnovel {
         /// The jnovel title slug, from after /series/ in the title.
@@ -40,6 +48,9 @@ fn main() {
     let opt = Opt::parse();
 
     match opt.cmd {
+        Command::Ao3 { story_id } => {
+            ao3::get(story_id).unwrap();
+        }
         Command::Jnovel { title_slug } => {
             jnovel::get(title_slug).unwrap();
         }
