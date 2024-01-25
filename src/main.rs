@@ -1,7 +1,9 @@
+use anyhow::Result;
 use clap::Parser;
 
 mod ao3;
 mod jnovel;
+mod seasonal_anime;
 
 #[derive(Debug, Parser)]
 #[clap(
@@ -33,6 +35,7 @@ enum Command {
         #[arg(allow_hyphen_values = true)]
         title_slug: String,
     },
+    SeasonalAnime,
 }
 
 
@@ -44,15 +47,12 @@ enum Command {
 //     xx_password: String,
 // }
 
-fn main() {
+fn main() -> Result<()> {
     let opt = Opt::parse();
 
     match opt.cmd {
-        Command::Ao3 { story_id } => {
-            ao3::get(story_id).unwrap();
-        }
-        Command::Jnovel { title_slug } => {
-            jnovel::get(title_slug).unwrap();
-        }
+        Command::Ao3 { story_id } => ao3::get(story_id),
+        Command::Jnovel { title_slug } => jnovel::get(title_slug),
+        Command::SeasonalAnime => seasonal_anime::get(),
     }
 }

@@ -5,9 +5,10 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.79"
-# awconf = { git = "https://github.com/awused/awconf" }
-chrono = "0.4.31"
+awconf = { git = "https://github.com/awused/awconf" }
+chrono = "0.4.32"
 clap = { version = "4.4.18", features = ["derive"] }
+regex = "1.10.3"
 # Each scraper only makes a few requests and doing one at a time is better for the servers
 reqwest = { version = "0.11.23", features = ["blocking", "brotli", "deflate", "json", "gzip"] }
 rss = "2.0.7"
