@@ -3,12 +3,13 @@ use clap::Parser;
 
 mod ao3;
 mod jnovel;
+mod mangadex;
 mod seasonal_anime;
 
 #[derive(Debug, Parser)]
 #[clap(
     name = "rss-scrapers",
-    about = "Tool for scraping various different sites and constructing rss feeds"
+    about = "Tool for scraping various sites and constructing rss feeds"
 )]
 pub struct Opt {
     // #[arg(short, long, value_parser)]
@@ -35,6 +36,14 @@ enum Command {
         #[arg(allow_hyphen_values = true)]
         title_slug: String,
     },
+    /// Mangadex series
+    Mangadex {
+        /// Mangadex series UUID
+        /// https://mangadex.org/title/975f3334-8395-4393-84a2-50fcaccbcdc0 has a UUID of
+        /// 975f3334-8395-4393-84a2-50fcaccbcdc0
+        #[arg(allow_hyphen_values = true)]
+        series: String,
+    },
     SeasonalAnime,
 }
 
@@ -53,6 +62,7 @@ fn main() -> Result<()> {
     match opt.cmd {
         Command::Ao3 { story_id } => ao3::get(story_id),
         Command::Jnovel { title_slug } => jnovel::get(title_slug),
+        Command::Mangadex { series } => mangadex::get(series),
         Command::SeasonalAnime => seasonal_anime::get(),
     }
 }
