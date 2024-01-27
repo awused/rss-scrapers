@@ -34,6 +34,7 @@ pub fn get() -> Result<()> {
         .title("Visual Novel Translation Status".to_string())
         .link(URL.to_string())
         .items(items)
+        .ttl(Some(360.to_string()))
         .build();
 
     print!("{}", feed.to_string());
