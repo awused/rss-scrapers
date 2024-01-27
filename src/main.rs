@@ -5,6 +5,7 @@ mod ao3;
 mod jnovel;
 mod mangadex;
 mod seasonal_anime;
+mod vn_news;
 
 #[derive(Debug, Parser)]
 #[clap(
@@ -45,6 +46,7 @@ enum Command {
         series: String,
     },
     SeasonalAnime,
+    VnNews,
 }
 
 
@@ -64,5 +66,6 @@ fn main() -> Result<()> {
         Command::Jnovel { title_slug } => jnovel::get(title_slug),
         Command::Mangadex { series } => mangadex::get(series),
         Command::SeasonalAnime => seasonal_anime::get(),
+        Command::VnNews => vn_news::get(),
     }
 }
