@@ -4,7 +4,9 @@ use clap::Parser;
 mod ao3;
 mod jnovel;
 mod mangadex;
+mod royalroad;
 mod seasonal_anime;
+mod tfgames;
 mod vn_news;
 
 #[derive(Debug, Parser)]
@@ -45,7 +47,14 @@ enum Command {
         #[arg(allow_hyphen_values = true)]
         series: String,
     },
+    RoyalRoad,
     SeasonalAnime,
+    Tfgames {
+        /// Game ID
+        /// https://tfgames.site/?module=viewgame&id=1234 has an ID of 1234
+        #[arg(allow_hyphen_values = true)]
+        game_id: String,
+    },
     VnNews,
 }
 
@@ -65,7 +74,9 @@ fn main() -> Result<()> {
         Command::Ao3 { story_id } => ao3::get(story_id),
         Command::Jnovel { title_slug } => jnovel::get(title_slug),
         Command::Mangadex { series } => mangadex::get(series),
+        Command::RoyalRoad => royalroad::get(),
         Command::SeasonalAnime => seasonal_anime::get(),
+        Command::Tfgames { game_id } => tfgames::get(game_id),
         Command::VnNews => vn_news::get(),
     }
 }
