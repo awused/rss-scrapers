@@ -14,7 +14,7 @@ cur.execute('SELECT url FROM feeds WHERE url LIKE "!gelbooru-rss %"')
 
 feedUpdates = []
 for r in cur.fetchall():
-    rest = str(r[0]).rsplit(' ', 1)[1]
+    rest = str(r[0]).split(' ', 1)[1]
     feedUpdates.append(('!rss-scrapers gelbooru ' + rest, r[0]))
 
 # print(feedUpdates[:20])
