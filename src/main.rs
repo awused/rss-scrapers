@@ -1,7 +1,10 @@
+#![allow(rustdoc::bare_urls)]
+
 use anyhow::Result;
 use clap::Parser;
 
 mod ao3;
+mod gelbooru;
 mod jnovel;
 mod mangadex;
 mod royalroad;
@@ -32,6 +35,12 @@ enum Command {
         #[arg(allow_hyphen_values = true)]
         story_id: String,
     },
+    /// Gelbooru Rss
+    /// Uses $HOME/.rss/geltagblacklist
+    Gelbooru {
+        #[arg(allow_hyphen_values = true, required=true, num_args=1..)]
+        query: Vec<String>,
+    },
     /// Jnovel-club series
     Jnovel {
         /// The jnovel title slug, from after /series/ in the title.
@@ -59,19 +68,12 @@ enum Command {
 }
 
 
-// #[derive(Debug, Deserialize)]
-// pub struct Credentials {
-//     #[serde(default)]
-//     xx_username: String,
-//     #[serde(default)]
-//     xx_password: String,
-// }
-
 fn main() -> Result<()> {
     let opt = Opt::parse();
 
     match opt.cmd {
         Command::Ao3 { story_id } => ao3::get(story_id),
+        Command::Gelbooru { query } => gelbooru::get(query),
         Command::Jnovel { title_slug } => jnovel::get(title_slug),
         Command::Mangadex { series } => mangadex::get(series),
         Command::RoyalRoad => royalroad::get(),

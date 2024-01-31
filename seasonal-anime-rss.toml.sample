@@ -3,7 +3,7 @@
 # Searches will automatically stop running 2 weeks after the end of the quarter,
 # in case you forget to remove them.
 # When dealing with groups with very slow releases you'll want to
-title = 'Seasonal Anime Torrents' # Needs to be an array of one string
+title = 'Seasonal Anime Torrents'
 
 # Use ongoing to specify long running shows or releases from slow groups.
 # These will be run indefinitely so be sure to manually remove them when done.

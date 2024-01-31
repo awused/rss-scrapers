@@ -1,0 +1,19 @@
+# Specify blacklisted tags and API credentials
+# This config is optional
+# Place in ~/.gelbooru-rss.toml or ~/.config/gelbooru-rss/gelbooru-rss.toml
+
+
+# User ID and api keys from a gelbooru account.
+# This makes your requests less likely to be blocked during heavy traffic.
+# user_id = ""
+# api_key = ""
+
+
+# Where the database of known tags is stored.
+# Default is $HOME/.rss/geltagdb, but environment variables will not expand in this string.
+# tag_db = ""
+
+
+# A list of tags that are blacklisted.
+# Any images with these tags will be excluded from the output.
+blacklist = []
