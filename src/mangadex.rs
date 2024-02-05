@@ -8,7 +8,7 @@ use reqwest::blocking::Client;
 use reqwest::Url;
 use rss::{ChannelBuilder, GuidBuilder, Item, ItemBuilder};
 use serde::Deserialize;
-use serde_with::serde_as;
+use serde_with::{serde_as, DefaultOnNull, NoneAsEmptyString};
 
 const DELAY: Duration = Duration::from_secs(2);
 
@@ -155,7 +155,6 @@ struct Data {
 #[serde(rename_all = "camelCase")]
 struct MangaAttributes {
     pub title: LocalizedString,
-    // pub alt_titles: Vec<LocalizedString>,
     pub description: LocalizedString,
 }
 
@@ -185,19 +184,19 @@ struct ChapterList {
 #[serde(rename_all = "camelCase")]
 struct Chapter {
     pub id: String,
-    // #[serde(rename = "type")]
-    // pub type_field: String,
     pub attributes: ChapterAttributes,
     pub relationships: Vec<Relationship>,
 }
 
+#[serde_as]
 #[derive(Default, Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[serde_as]
 struct ChapterAttributes {
+    #[serde_as(as = "NoneAsEmptyString")]
     pub volume: Option<String>,
     #[serde_as(deserialize_as = "DefaultOnNull")]
     pub chapter: Option<String>,
+    #[serde_as(as = "NoneAsEmptyString")]
     pub title: Option<String>,
     pub created_at: String,
 }

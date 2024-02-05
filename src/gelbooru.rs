@@ -9,15 +9,15 @@ use reqwest::Url;
 use rocksdb::DB;
 use rss::{ChannelBuilder, GuidBuilder, ItemBuilder};
 use serde::Deserialize;
-use serde_with::serde_as;
+use serde_with::{serde_as, NoneAsEmptyString};
 
 static CONFIG: Lazy<Config> =
     Lazy::new(|| awconf::load_config("gelbooru-rss", None::<&str>, Some("")).unwrap().0);
 
 const DELAY: Duration = Duration::from_secs(1);
 
-#[derive(Debug, Deserialize)]
 #[serde_as]
+#[derive(Debug, Deserialize)]
 struct Config {
     #[serde(default)]
     #[serde_as(as = "NoneAsEmptyString")]

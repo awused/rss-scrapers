@@ -18,10 +18,6 @@ mod vn_news;
     about = "Tool for scraping various sites and constructing rss feeds"
 )]
 pub struct Opt {
-    // #[arg(short, long, value_parser)]
-    /// Override the selected config.
-    // awconf: Option<PathBuf>,
-
     #[command(subcommand)]
     cmd: Command,
 }
