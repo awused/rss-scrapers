@@ -22,6 +22,7 @@ struct Config {
     #[serde(default)]
     #[serde_as(as = "NoneAsEmptyString")]
     user_id: Option<String>,
+    #[serde(default)]
     #[serde_as(as = "NoneAsEmptyString")]
     api_key: Option<String>,
     #[serde(default)]

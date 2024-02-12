@@ -1,0 +1,14 @@
+# Specify credentials
+# This config is required
+# Place in ~/.qq-rss.toml or ~/.config/qq-rss/qq-rss.toml
+
+
+# Credentials are required to read NSFW pages, and there's no reason to use QQ for SFW.
+username = ""
+password = ""
+
+
+# Where the cookie jar is stored.
+# Environment variables will not be expanded in this, just provide a full absolute path.
+cookie_jar = "/home/USERNAME/.config/qq-rss/cookies.json"
+

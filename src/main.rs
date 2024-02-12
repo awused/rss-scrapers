@@ -7,6 +7,7 @@ mod ao3;
 mod gelbooru;
 mod jnovel;
 mod mangadex;
+mod qq;
 mod royalroad;
 mod seasonal_anime;
 mod tfgames;
@@ -52,6 +53,13 @@ enum Command {
         #[arg(allow_hyphen_values = true)]
         series: String,
     },
+    // QQ
+    QQ {
+        /// Thread ID
+        /// /threads/ab-cd.1234 has an ID of ab-cd.1234
+        #[arg(allow_hyphen_values = true)]
+        thread_id: String,
+    },
     RoyalRoad,
     SeasonalAnime,
     Tfgames {
@@ -72,6 +80,7 @@ fn main() -> Result<()> {
         Command::Gelbooru { query } => gelbooru::get(query),
         Command::Jnovel { title_slug } => jnovel::get(title_slug),
         Command::Mangadex { series } => mangadex::get(series),
+        Command::QQ { thread_id } => qq::get(thread_id),
         Command::RoyalRoad => royalroad::get(),
         Command::SeasonalAnime => seasonal_anime::get(),
         Command::Tfgames { game_id } => tfgames::get(game_id),
