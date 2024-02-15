@@ -109,6 +109,9 @@ fn get_chapters(client: &Client, series: &str, title: &str) -> Result<Vec<Item>>
                             (None, Some(c), Some(t)) => {
                                 format!("{title} - Chapter {c} - {t}")
                             }
+                            (None, Some(c), None) => {
+                                format!("{title} - Chapter {c}")
+                            }
                             (None, None, Some(t)) => {
                                 format!("{title} - {t}")
                             }
