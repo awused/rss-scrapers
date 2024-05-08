@@ -164,7 +164,7 @@ struct MangaAttributes {
 type LocalizedString = HashMap<String, String>;
 
 fn english_or_first(s: &LocalizedString) -> Option<String> {
-    s.get("en").or_else(|| s.values().next()).map(String::clone)
+    s.get("en").or_else(|| s.values().next()).cloned()
 }
 
 #[derive(Default, Debug, Clone, Deserialize)]
