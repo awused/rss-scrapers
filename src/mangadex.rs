@@ -98,7 +98,7 @@ fn get_chapters(client: &Client, series: &str, title: &str) -> Result<Vec<Item>>
                     })
                 })
                 .map(|c| {
-                    let title =
+                    let mut title =
                         match (c.attributes.volume, c.attributes.chapter, c.attributes.title) {
                             (Some(v), Some(c), Some(t)) => {
                                 format!("{title} - Volume {v}, Chapter {c} - {t}")
@@ -117,6 +117,12 @@ fn get_chapters(client: &Client, series: &str, title: &str) -> Result<Vec<Item>>
                             }
                             (..) => format!("{title} -- unknown chapter"),
                         };
+
+                    if c.attributes.pages == 0
+                        && c.attributes.external_url.is_some_and(|s| !s.is_empty())
+                    {
+                        title += " (External)";
+                    }
 
                     // This is probably unnecessary (aw-rss will consume rfc3339) but matches the
                     // old Go code exactly
@@ -199,7 +205,11 @@ struct ChapterAttributes {
     pub volume: Option<String>,
     #[serde_as(deserialize_as = "DefaultOnNull")]
     pub chapter: Option<String>,
+    #[serde_as(deserialize_as = "DefaultOnNull")]
+    pub external_url: Option<String>,
     #[serde_as(as = "NoneAsEmptyString")]
     pub title: Option<String>,
+    #[serde_as(deserialize_as = "DefaultOnNull")]
+    pub pages: usize,
     pub created_at: String,
 }
