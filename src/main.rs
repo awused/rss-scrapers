@@ -21,6 +21,9 @@ mod vn_news;
 pub struct Opt {
     #[command(subcommand)]
     cmd: Command,
+
+    #[arg(long, global = true)]
+    etag: Option<String>,
 }
 
 #[derive(Debug, Parser)]
@@ -80,7 +83,7 @@ fn main() -> Result<()> {
         Command::Gelbooru { query } => gelbooru::get(query),
         Command::Jnovel { title_slug } => jnovel::get(title_slug),
         Command::Mangadex { series } => mangadex::get(series),
-        Command::QQ { thread_id } => qq::get(thread_id),
+        Command::QQ { thread_id } => qq::get(thread_id, opt.etag),
         Command::RoyalRoad => royalroad::get(),
         Command::SeasonalAnime => seasonal_anime::get(),
         Command::Tfgames { game_id } => tfgames::get(game_id),

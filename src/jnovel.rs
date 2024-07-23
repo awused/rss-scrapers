@@ -6,7 +6,8 @@ use reqwest::blocking::Client;
 use rss::{ChannelBuilder, GuidBuilder, Item, ItemBuilder};
 use serde::Deserialize;
 
-pub fn get(series: String) -> Result<()> {
+// This might take etags, but I'm not sure I trust them
+pub fn get(series: String /* , etag: Option<String> */) -> Result<()> {
     let client = reqwest::blocking::Client::new();
 
     let info: SeriesInfo = client

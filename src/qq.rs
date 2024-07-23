@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{BufReader, Cursor, ErrorKind};
 use std::path::PathBuf;
@@ -7,7 +8,10 @@ use std::time::Duration;
 
 use anyhow::{Context, Result};
 use reqwest::blocking::multipart::Form;
+use reqwest::header::{ETAG, IF_NONE_MATCH};
+use reqwest::StatusCode;
 use reqwest_cookie_store::{CookieStore, CookieStoreMutex};
+use rss::extension::{Extension, ExtensionMap};
 use rss::Channel;
 use scraper::{Html, Selector};
 use serde::Deserialize;
@@ -20,7 +24,7 @@ struct Config {
     cookie_jar: PathBuf,
 }
 
-pub fn get(thread_id: String) -> Result<()> {
+pub fn get(thread_id: String, last_etag: Option<String>) -> Result<()> {
     let config: Config = awconf::load_config("qq-rss", None::<&str>, None::<&str>)?.0;
 
     let cookie_store = match File::open(&config.cookie_jar) {
@@ -38,7 +42,25 @@ pub fn get(thread_id: String) -> Result<()> {
     let url = format!(
         "https://forum.questionablequesting.com/threads/{thread_id}/threadmarks.rss?category_id=1"
     );
-    let text = client.get(&url).send()?.text()?;
+    let mut req = client.get(&url);
+    // Only bother setting etag the first time, just in case weird things happen
+    if let Some(etag) = last_etag {
+        req = req.header(IF_NONE_MATCH, etag);
+    }
+    let resp = req.send()?;
+
+    if resp.status() == StatusCode::NOT_MODIFIED {
+        println!("not modified");
+        return Ok(());
+    }
+
+    let mut etag = resp
+        .headers()
+        .get(ETAG)
+        .and_then(|etag| etag.to_str().ok())
+        .map(ToString::to_string);
+
+    let text = resp.text()?;
     let feed = Channel::read_from(Cursor::new(&text));
 
     let mut feed = match feed {
@@ -71,7 +93,14 @@ pub fn get(thread_id: String) -> Result<()> {
                 .text()?;
 
             thread::sleep(Duration::from_secs(1));
-            Channel::read_from(Cursor::new(client.get(&url).send()?.text()?))?
+
+            let resp = client.get(&url).send()?;
+            etag = resp
+                .headers()
+                .get(ETAG)
+                .and_then(|etag| etag.to_str().ok())
+                .map(ToString::to_string);
+            Channel::read_from(Cursor::new(resp.text()?))?
         }
     };
 
@@ -83,6 +112,17 @@ pub fn get(thread_id: String) -> Result<()> {
 
     // Fix the link to the thread
     feed.set_link(format!("https://forum.questionablequesting.com/threads/{thread_id}"));
+    if let Some(etag) = etag {
+        let mut extensions = ExtensionMap::new();
+        let mut ext = Extension::default();
+        ext.set_name("aw-rss:etag".to_string());
+        ext.set_value(Some(etag));
+        let mut map = BTreeMap::new();
+        map.insert(String::new(), vec![ext]);
+        extensions.insert(String::new(), map);
+
+        feed.set_extensions(extensions);
+    }
 
     println!("{}", feed.to_string());
 
