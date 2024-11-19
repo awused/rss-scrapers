@@ -1,14 +1,18 @@
-use anyhow::Result;
 use chrono::Utc;
+use color_eyre::Result;
 use rss::{ChannelBuilder, GuidBuilder, ItemBuilder};
 use scraper::{Html, Selector};
+use tracing::error_span;
 
 const URL: &str = "https://erogegames.com/forums/forum/14-eroge-news/";
 
 pub fn get() -> Result<()> {
     let client = reqwest::blocking::Client::new();
 
-    let html = client.get(URL).send()?.text()?;
+    let html = client.get(URL).send()?.bytes()?;
+    let _span = error_span!("response", html = %String::from_utf8_lossy(&html)).entered();
+
+    let html = String::from_utf8(html.into())?;
     let doc = Html::parse_document(&html);
 
     // Page does not have times, but using the current time is good enough

@@ -1,9 +1,10 @@
-use anyhow::Result;
 use chrono::Utc;
+use color_eyre::Result;
 use regex::Regex;
 use reqwest::blocking::Client;
 use rss::{ChannelBuilder, GuidBuilder, Item, ItemBuilder};
 use scraper::{Html, Selector};
+use tracing::error_span;
 
 pub fn get() -> Result<()> {
     let client = reqwest::blocking::Client::new();
@@ -30,7 +31,7 @@ pub fn get() -> Result<()> {
         .items(items)
         .build();
 
-    print!("{}", feed.to_string());
+    print!("{feed}");
     Ok(())
 }
 
@@ -38,7 +39,10 @@ fn get_fictions(client: &Client, url: String) -> Result<Vec<Item>> {
     let selector = Selector::parse("h2.fiction-title > a").unwrap();
     let re = Regex::new(r#"^/fiction/(\d+)(/|$)"#).unwrap();
 
-    let page = client.get(url).send()?.text()?;
+    let page = client.get(url).send()?.bytes()?;
+    let _span = error_span!("response", page = %String::from_utf8_lossy(&page)).entered();
+
+    let page = String::from_utf8(page.into())?;
     let doc = Html::parse_document(&page);
 
     let now = Utc::now().to_rfc2822();

@@ -1,7 +1,9 @@
 #![allow(rustdoc::bare_urls)]
 
-use anyhow::Result;
 use clap::Parser;
+use color_eyre::Result;
+use tracing_error::ErrorLayer;
+use tracing_subscriber::layer::SubscriberExt;
 
 mod ao3;
 mod gelbooru;
@@ -76,6 +78,10 @@ enum Command {
 
 
 fn main() -> Result<()> {
+    color_eyre::install()?;
+    let subscriber = tracing_subscriber::Registry::default().with(ErrorLayer::default());
+    tracing::subscriber::set_global_default(subscriber)?;
+
     let opt = Opt::parse();
 
     match opt.cmd {

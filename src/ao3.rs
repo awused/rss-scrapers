@@ -1,7 +1,9 @@
-use anyhow::{Context, Result};
 use chrono::Utc;
+use color_eyre::Result;
+use color_eyre::eyre::OptionExt;
 use rss::{ChannelBuilder, GuidBuilder, ItemBuilder};
 use scraper::{Html, Selector};
+use tracing::error_span;
 
 const HOST: &str = "https://archiveofourown.org";
 
@@ -10,26 +12,31 @@ pub fn get(series: String) -> Result<()> {
 
     let navigate = format!("{HOST}/works/{series}/navigate");
 
-    let html = client.get(&navigate).send()?.text()?;
+    let html = client.get(&navigate).send()?.bytes()?;
+
+    let _span = error_span!("document", document = %String::from_utf8_lossy(&html)).entered();
+
+    let html = String::from_utf8(html.into())?;
     let doc = Html::parse_document(&html);
 
     // Page does not have times, but using the current time is good enough
     let now = Utc::now().to_rfc2822();
 
+
     let title = doc
         .select(&Selector::parse("h2.heading > a").unwrap())
         .next()
-        .context("No title")?
+        .ok_or_eyre("No title")?
         .text()
         .next()
-        .context("Title had no text")?;
+        .ok_or_eyre("Title had no text")?;
 
     let chapters: Vec<_> = doc
         .select(&Selector::parse("ol.chapter > li > a").unwrap())
         .rev()
         .map(|c| {
-            let title = c.text().next().context("Chapter has no title").unwrap();
-            let href = c.attr("href").context("Missing chapter link").unwrap();
+            let title = c.text().next().ok_or_eyre("Chapter has no title").unwrap();
+            let href = c.attr("href").ok_or_eyre("Missing chapter link").unwrap();
 
             ItemBuilder::default()
                 .title(Some(title.to_string()))

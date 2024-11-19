@@ -2,13 +2,15 @@ use std::collections::{HashMap, HashSet};
 use std::thread;
 use std::time::Duration;
 
-use anyhow::{bail, Result};
 use chrono::DateTime;
-use reqwest::blocking::Client;
+use color_eyre::Result;
+use color_eyre::eyre::bail;
 use reqwest::Url;
+use reqwest::blocking::Client;
 use rss::{ChannelBuilder, GuidBuilder, Item, ItemBuilder};
 use serde::Deserialize;
-use serde_with::{serde_as, DefaultOnNull, NoneAsEmptyString};
+use serde_with::{DefaultOnNull, NoneAsEmptyString, serde_as};
+use tracing::error_span;
 
 const DELAY: Duration = Duration::from_secs(2);
 
@@ -30,8 +32,12 @@ pub fn get(series: String) -> Result<()> {
 
     thread::sleep(DELAY);
 
-    let info: MangaInfo =
-        client.get(format!("https://api.mangadex.org/manga/{series}")).send()?.json()?;
+    let response =
+        client.get(format!("https://api.mangadex.org/manga/{series}")).send()?.bytes()?;
+
+    let _span =
+        error_span!("manga_info", response = &*String::from_utf8_lossy(&response)).entered();
+    let info: MangaInfo = serde_json::from_slice(&response)?;
 
     if info.result != "ok" {
         bail!("Failed to get info for {series}: {info:?}");
@@ -49,7 +55,7 @@ pub fn get(series: String) -> Result<()> {
         .title(title)
         .build();
 
-    println!("{}", feed.to_string());
+    println!("{feed}");
     Ok(())
 }
 
@@ -78,7 +84,12 @@ fn get_chapters(client: &Client, series: &str, title: &str) -> Result<Vec<Item>>
         let mut url = page_url.clone();
         url.query_pairs_mut().append_pair("offset", &offset.to_string());
 
-        let page: ChapterList = client.get(url).send()?.json()?;
+        let response = client.get(url).send()?.bytes()?;
+
+        let _span =
+            error_span!("chapter_list", response = &*String::from_utf8_lossy(&response)).entered();
+        let page: ChapterList = serde_json::from_slice(&response)?;
+
 
         total = page.total as usize;
         if page.data.len() != PAGE_SIZE && offset + page.data.len() < total {

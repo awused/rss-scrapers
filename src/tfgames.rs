@@ -1,7 +1,9 @@
-use anyhow::{Context, Result};
 use chrono::Utc;
+use color_eyre::Result;
+use color_eyre::eyre::OptionExt;
 use rss::{ChannelBuilder, GuidBuilder, ItemBuilder};
 use scraper::{CaseSensitivity, Html, Selector};
+use tracing::error_span;
 
 pub fn get(game: String) -> Result<()> {
     let client = reqwest::blocking::Client::new();
@@ -9,12 +11,17 @@ pub fn get(game: String) -> Result<()> {
     let url = format!("https://tfgames.site/?module=viewgame&id={game}");
     let a_select = Selector::parse(".dltext > a").unwrap();
 
-    let page = client.get(url.clone()).send()?.text()?;
+    let page = client.get(url.clone()).send()?.bytes()?;
+    let _span = error_span!("response", page = %String::from_utf8_lossy(&page)).entered();
+
+    let page = String::from_utf8(page.into())?;
+
+
     let doc = Html::parse_document(&page);
     let title = doc
         .select(&Selector::parse("title").unwrap())
         .next()
-        .context("No title")?
+        .ok_or_eyre("No title")?
         .text()
         .collect::<String>();
 
@@ -33,9 +40,9 @@ pub fn get(game: String) -> Result<()> {
             continue;
         }
 
-        let a = e.select(&a_select).next().context("Missing download link")?;
+        let a = e.select(&a_select).next().ok_or_eyre("Missing download link")?;
 
-        let href = a.attr("href").context("Download link missing url")?;
+        let href = a.attr("href").ok_or_eyre("Download link missing url")?;
 
         items.push(
             ItemBuilder::default()

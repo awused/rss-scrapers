@@ -1,12 +1,13 @@
 use std::collections::{HashMap, HashSet};
-use std::io::BufReader;
+use std::io::{BufReader, Cursor};
 
-use anyhow::Result;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime, Utc};
+use color_eyre::Result;
 use regex::Regex;
 use reqwest::Url;
 use rss::{Channel, ChannelBuilder};
 use serde::Deserialize;
+use tracing::error_span;
 
 #[derive(Debug, Deserialize)]
 struct Config {
@@ -71,10 +72,12 @@ pub fn get() -> Result<()> {
         return Ok(());
     }
 
-    let base_feed = client.get(rss_url).send()?;
+    let base_feed = client.get(rss_url).send()?.bytes()?;
 
-    // If we need feed-rs for another scraper, use that instead for more generalized parsing?
-    let base_feed = Channel::read_from(BufReader::new(base_feed))?;
+    let _span = error_span!("nyaa_feed", feed = %String::from_utf8_lossy(&base_feed)).entered();
+
+    // If we need feed-rss for another scraper, use that instead for more generalized parsing?
+    let base_feed = Channel::read_from(BufReader::new(Cursor::new(base_feed)))?;
     feed.items(base_feed.items);
 
     print!("{}", feed.build().to_string());

@@ -1,20 +1,22 @@
 use std::collections::HashSet;
 
-use anyhow::Result;
 use chrono::Utc;
+use color_eyre::Result;
 use reqwest::blocking::Client;
 use rss::{ChannelBuilder, GuidBuilder, Item, ItemBuilder};
 use serde::Deserialize;
+use tracing::error_span;
 
 // This might take etags, but I'm not sure I trust them
 pub fn get(series: String /* , etag: Option<String> */) -> Result<()> {
     let client = reqwest::blocking::Client::new();
 
-    let info: SeriesInfo = client
+    let response = client
         .get(format!(r#"https://api.j-novel.club/api/series/findOne?filter={{"where":{{"titleslug":"{series}"}},"include":["volumes","parts"]}}"#))
-        .send()?
-        .json()?;
+        .send()?.bytes()?;
 
+    let _span = error_span!("response", response = &*String::from_utf8_lossy(&response)).entered();
+    let info: SeriesInfo = serde_json::from_slice(&response)?;
 
     let finals = final_chapters(&client, &info.id)?;
 
@@ -50,17 +52,21 @@ pub fn get(series: String /* , etag: Option<String> */) -> Result<()> {
         .items(items)
         .build();
 
-    print!("{}", feed.to_string());
+    print!("{feed}");
     Ok(())
 }
 
 fn final_chapters(client: &Client, id: &str) -> Result<HashSet<String>> {
-    let events: Vec<Event> = client
+    let response = client
         .get(format!(
             "https://api.j-novel.club/api/events?filter[limit]=100&filter[where][serieId]={id}"
         ))
         .send()?
-        .json()?;
+        .bytes()?;
+
+    let _span =
+        error_span!("final_chapters", response = &*String::from_utf8_lossy(&response)).entered();
+    let events: Vec<Event> = serde_json::from_slice(&response)?;
 
     Ok(events
         .into_iter()

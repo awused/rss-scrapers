@@ -6,15 +6,17 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
-use anyhow::{Context, Result};
+use color_eyre::Result;
+use color_eyre::eyre::OptionExt;
+use reqwest::StatusCode;
 use reqwest::blocking::multipart::Form;
 use reqwest::header::{ETAG, IF_NONE_MATCH};
-use reqwest::StatusCode;
 use reqwest_cookie_store::{CookieStore, CookieStoreMutex};
-use rss::extension::{Extension, ExtensionMap};
 use rss::Channel;
+use rss::extension::{Extension, ExtensionMap};
 use scraper::{Html, Selector};
 use serde::Deserialize;
+use tracing::error_span;
 
 
 #[derive(Debug, Deserialize)]
@@ -60,7 +62,10 @@ pub fn get(thread_id: String, last_etag: Option<String>) -> Result<()> {
         .and_then(|etag| etag.to_str().ok())
         .map(ToString::to_string);
 
-    let text = resp.text()?;
+    let resp = resp.bytes()?;
+    let _span = error_span!("fetch", response = &*String::from_utf8_lossy(&resp)).entered();
+
+    let text = String::from_utf8(resp.into())?;
     let feed = Channel::read_from(Cursor::new(&text));
 
     let mut feed = match feed {
@@ -73,9 +78,9 @@ pub fn get(thread_id: String, last_etag: Option<String>) -> Result<()> {
             let xf_token = doc
                 .select(&Selector::parse("input[name=\"_xfToken\"]").unwrap())
                 .next()
-                .context("No xfToken in initial response")?
+                .ok_or_eyre("No xfToken in initial response")?
                 .attr("value")
-                .context("xfToken had no value")?
+                .ok_or_eyre("xfToken had no value")?
                 .to_string();
 
             thread::sleep(Duration::from_secs(1));
@@ -124,7 +129,7 @@ pub fn get(thread_id: String, last_etag: Option<String>) -> Result<()> {
         feed.set_extensions(extensions);
     }
 
-    println!("{}", feed.to_string());
+    println!("{feed}");
 
     Ok(())
 }

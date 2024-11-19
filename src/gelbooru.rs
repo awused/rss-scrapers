@@ -2,14 +2,16 @@ use std::collections::HashSet;
 use std::thread;
 use std::time::Duration;
 
-use anyhow::{anyhow, bail, Result};
 use chrono::DateTime;
+use color_eyre::Result;
+use color_eyre::eyre::{bail, eyre};
 use once_cell::sync::Lazy;
 use reqwest::Url;
 use rocksdb::DB;
 use rss::{ChannelBuilder, GuidBuilder, ItemBuilder};
 use serde::Deserialize;
-use serde_with::{serde_as, NoneAsEmptyString};
+use serde_with::{NoneAsEmptyString, serde_as};
+use tracing::error_span;
 
 static CONFIG: Lazy<Config> =
     Lazy::new(|| awconf::load_config("gelbooru-rss", None::<&str>, Some("")).unwrap().0);
@@ -45,7 +47,11 @@ pub fn get(query: Vec<String>) -> Result<()> {
 
     add_api_params(&mut api_url);
 
-    let index: IndexResponse = client.get(api_url).send()?.json()?;
+    let response = client.get(api_url).send()?.bytes()?;
+
+    let _span = error_span!("response", response = %String::from_utf8_lossy(&response)).entered();
+
+    let index: IndexResponse = serde_json::from_slice(&response)?;
     let mut matched_blacklist_tags = HashSet::new();
 
     let items = index
@@ -170,10 +176,10 @@ fn get_title_for_image(db: &DB, post: &Post, query: &[String]) -> Result<String>
                 }
                 None
             }
-            Ok(_) => Some(Err(anyhow!("Unable to read tag_type for {t}"))),
+            Ok(_) => Some(Err(eyre!("Unable to read tag_type for {t}"))),
             Err(e) => Some(Err(e.into())),
         })
-        .collect::<Result<_>>()?;
+        .collect::<Result<()>>()?;
 
 
     let mut title = if relevant_tags.is_empty() {
@@ -220,7 +226,11 @@ fn load_missing_tags(db: &DB, tags: &[&str]) -> Result<()> {
     ))?;
     add_api_params(&mut tags_url);
 
-    let response: TagsResponse = client.get(tags_url).send()?.json()?;
+    let response = client.get(tags_url).send()?.bytes()?;
+
+    let _span = error_span!("load_missing_tags", response = %String::from_utf8_lossy(&response));
+
+    let response: TagsResponse = serde_json::from_slice(&response)?;
 
     // Some tags are duplicated, how. Why.
     // Response isn't in any particular order either.
