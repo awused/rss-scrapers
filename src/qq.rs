@@ -30,7 +30,7 @@ pub fn get(thread_id: String, last_etag: Option<String>) -> Result<()> {
     let config: Config = awconf::load_config("qq-rss", None::<&str>, None::<&str>)?.0;
 
     let cookie_store = match File::open(&config.cookie_jar) {
-        Ok(f) => CookieStore::load_json(BufReader::new(f)).unwrap(),
+        Ok(f) => CookieStore::load(BufReader::new(f), |c| serde_json::from_str(c)).unwrap(),
         Err(e) if e.kind() == ErrorKind::NotFound => CookieStore::new(None),
         Err(e) => return Err(e.into()),
     };
@@ -112,7 +112,7 @@ pub fn get(thread_id: String, last_etag: Option<String>) -> Result<()> {
     {
         let mut f = File::create(&config.cookie_jar)?;
         let store = cookie_store.lock().unwrap();
-        store.save_json(&mut f).unwrap();
+        store.save(&mut f, serde_json::to_string).unwrap();
     }
 
     // Fix the link to the thread

@@ -68,7 +68,7 @@ pub fn get() -> Result<()> {
     feed.title(&conf.title).link(search_url.to_string()).ttl(Some("60".into()));
 
     if searches.is_empty() {
-        print!("{}", feed.build().to_string());
+        print!("{}", feed.build());
         return Ok(());
     }
 
@@ -80,6 +80,6 @@ pub fn get() -> Result<()> {
     let base_feed = Channel::read_from(BufReader::new(Cursor::new(base_feed)))?;
     feed.items(base_feed.items);
 
-    print!("{}", feed.build().to_string());
+    print!("{}", feed.build());
     Ok(())
 }

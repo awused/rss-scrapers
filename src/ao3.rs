@@ -54,6 +54,6 @@ pub fn get(series: String) -> Result<()> {
         .items(chapters)
         .build();
 
-    print!("{}", feed.to_string());
+    print!("{feed}");
     Ok(())
 }

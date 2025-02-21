@@ -48,7 +48,7 @@ pub fn get(game: String) -> Result<()> {
             ItemBuilder::default()
                 .title(Some(format!("{version} {}", a.text().collect::<String>())))
                 .link(Some(href.to_string()))
-                .guid(Some(GuidBuilder::default().value(href.to_string()).build()))
+                .guid(Some(GuidBuilder::default().value(href.to_string() + &version).build()))
                 .pub_date(Some(now.clone()))
                 .build(),
         );
@@ -61,6 +61,6 @@ pub fn get(game: String) -> Result<()> {
         .items(items)
         .build();
 
-    println!("{}", feed.to_string());
+    println!("{feed}");
     Ok(())
 }

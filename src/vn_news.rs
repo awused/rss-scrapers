@@ -41,6 +41,6 @@ pub fn get() -> Result<()> {
         .ttl(Some(360.to_string()))
         .build();
 
-    print!("{}", feed.to_string());
+    print!("{feed}");
     Ok(())
 }

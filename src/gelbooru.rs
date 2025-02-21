@@ -99,7 +99,7 @@ pub fn get(query: Vec<String>) -> Result<()> {
         .items(items)
         .build();
 
-    print!("{}", feed.to_string());
+    print!("{feed}");
     Ok(())
 }
 
