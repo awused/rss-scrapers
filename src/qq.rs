@@ -63,7 +63,7 @@ pub fn get(thread_id: String, last_etag: Option<String>) -> Result<()> {
         .map(ToString::to_string);
 
     let resp = resp.bytes()?;
-    let _span = error_span!("fetch", response = &*String::from_utf8_lossy(&resp)).entered();
+    let _span = error_span!("fetch", response = %String::from_utf8_lossy(&resp)).entered();
 
     let text = String::from_utf8(resp.into())?;
     let feed = Channel::read_from(Cursor::new(&text));

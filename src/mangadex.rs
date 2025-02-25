@@ -32,11 +32,13 @@ pub fn get(series: String) -> Result<()> {
 
     thread::sleep(DELAY);
 
-    let response =
-        client.get(format!("https://api.mangadex.org/manga/{series}")).send()?.bytes()?;
+    let url = format!("https://api.mangadex.org/manga/{series}");
 
-    let _span =
-        error_span!("manga_info", response = &*String::from_utf8_lossy(&response)).entered();
+    let _span = error_span!("manga_info", url = %url).entered();
+
+    let response = client.get(url).send()?.bytes()?;
+
+    let _span = error_span!("manga_info", response = %String::from_utf8_lossy(&response)).entered();
     let info: MangaInfo = serde_json::from_slice(&response)?;
 
     if info.result != "ok" {
@@ -84,10 +86,14 @@ fn get_chapters(client: &Client, series: &str, title: &str) -> Result<Vec<Item>>
         let mut url = page_url.clone();
         url.query_pairs_mut().append_pair("offset", &offset.to_string());
 
+        let _span = error_span!("chapter_list", url = %url).entered();
+
         let response = client.get(url).send()?.bytes()?;
 
         let _span =
-            error_span!("chapter_list", response = &*String::from_utf8_lossy(&response)).entered();
+            error_span!("chapter_list", response = %String::from_utf8_lossy(&response)).entered();
+
+        println!("{}", String::from_utf8_lossy(&response));
         let page: ChapterList = serde_json::from_slice(&response)?;
 
 

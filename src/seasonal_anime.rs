@@ -72,6 +72,8 @@ pub fn get() -> Result<()> {
         return Ok(());
     }
 
+    let _span = error_span!("nyaa_url", rss_url = %rss_url, search_url = %search_url).entered();
+
     let base_feed = client.get(rss_url).send()?.bytes()?;
 
     let _span = error_span!("nyaa_feed", feed = %String::from_utf8_lossy(&base_feed)).entered();
