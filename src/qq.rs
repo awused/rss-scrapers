@@ -31,7 +31,7 @@ pub fn get(thread_id: String, last_etag: Option<String>) -> Result<()> {
 
     let cookie_store = match File::open(&config.cookie_jar) {
         Ok(f) => CookieStore::load(BufReader::new(f), |c| serde_json::from_str(c)).unwrap(),
-        Err(e) if e.kind() == ErrorKind::NotFound => CookieStore::new(None),
+        Err(e) if e.kind() == ErrorKind::NotFound => CookieStore::new(),
         Err(e) => return Err(e.into()),
     };
 

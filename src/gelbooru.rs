@@ -1,20 +1,21 @@
 use std::collections::HashSet;
+use std::sync::LazyLock;
 use std::thread;
 use std::time::Duration;
 
 use chrono::DateTime;
 use color_eyre::Result;
 use color_eyre::eyre::{bail, eyre};
-use once_cell::sync::Lazy;
 use reqwest::Url;
+use reqwest::blocking::Client;
 use rocksdb::DB;
 use rss::{ChannelBuilder, GuidBuilder, ItemBuilder};
 use serde::Deserialize;
 use serde_with::{NoneAsEmptyString, serde_as};
 use tracing::error_span;
 
-static CONFIG: Lazy<Config> =
-    Lazy::new(|| awconf::load_config("gelbooru-rss", None::<&str>, Some("")).unwrap().0);
+static CONFIG: LazyLock<Config> =
+    LazyLock::new(|| awconf::load_config("gelbooru-rss", None::<&str>, Some("")).unwrap().0);
 
 const DELAY: Duration = Duration::from_secs(1);
 
@@ -35,9 +36,9 @@ struct Config {
 }
 
 pub fn get(query: Vec<String>) -> Result<()> {
-    let config = Lazy::force(&CONFIG);
+    let config = LazyLock::force(&CONFIG);
     let db = open_db()?;
-    let client = reqwest::blocking::Client::new();
+    let client = Client::new();
 
     let mut tags = query.iter().map(|q| urlencoding::encode(q)).collect::<Vec<_>>().join("+");
 
@@ -65,7 +66,7 @@ pub fn get(query: Vec<String>) -> Result<()> {
             true
         })
         .map(|p| {
-            let title = get_title_for_image(&db, &p, &query)?;
+            let title = get_title_for_image(&client, &db, &p, &query)?;
 
             // Mon Dec 05 08:26:31 -0600 2022
             let pub_date = DateTime::parse_from_str(&p.created_at, "%a %b %d %H:%M:%S %z %Y")?
@@ -138,7 +139,7 @@ fn add_api_params(url: &mut Url) {
     }
 }
 
-fn get_title_for_image(db: &DB, post: &Post, query: &[String]) -> Result<String> {
+fn get_title_for_image(client: &Client, db: &DB, post: &Post, query: &[String]) -> Result<String> {
     let mut relevant_tags = HashSet::new();
 
     let missing_tags: Vec<_> = post
@@ -162,7 +163,7 @@ fn get_title_for_image(db: &DB, post: &Post, query: &[String]) -> Result<String>
         .chunks(50)
         .map(|c| {
             thread::sleep(DELAY);
-            load_missing_tags(db, c)
+            load_missing_tags(client, db, c)
         })
         .collect::<Result<Vec<_>>>()?;
 
@@ -212,9 +213,7 @@ fn tag_in_title(tag: &str, tag_type: u8, query: &[String]) -> bool {
     !query.iter().any(|t| t == tag)
 }
 
-fn load_missing_tags(db: &DB, tags: &[&str]) -> Result<()> {
-    let client = reqwest::blocking::Client::new();
-
+fn load_missing_tags(client: &Client, db: &DB, tags: &[&str]) -> Result<()> {
     let escaped = tags
         .iter()
         .map(|q| urlencoding::encode(&html_escape::decode_html_entities(&q)).to_string())
