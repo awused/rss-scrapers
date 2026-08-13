@@ -2,6 +2,12 @@
 name = "rss-scrapers"
 version = "0.1.0"
 edition = "2024"
+description = "Collection of rss scrapers for specific websites"
+readme = "README.md"
+license = "MIT"
+keywords = ["rss"]
+homepage = "https://github.com/awused/rss-scrapers"
+repository = "https://github.com/awused/rss-scrapers"
 
 [dependencies]
 awconf = { git = "https://github.com/awused/awconf" }

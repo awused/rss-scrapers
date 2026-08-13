@@ -10,7 +10,7 @@ use color_eyre::Result;
 use color_eyre::eyre::OptionExt;
 use reqwest::StatusCode;
 use reqwest::blocking::multipart::Form;
-use reqwest::header::{ETAG, IF_NONE_MATCH};
+use reqwest::header::ETAG;
 use reqwest_cookie_store::{CookieStore, CookieStoreMutex};
 use rss::Channel;
 use rss::extension::{Extension, ExtensionMap};
@@ -26,7 +26,7 @@ struct Config {
     cookie_jar: PathBuf,
 }
 
-pub fn get(thread_id: String, last_etag: Option<String>) -> Result<()> {
+pub fn get(thread_id: String, _last_etag: Option<String>) -> Result<()> {
     let config: Config = awconf::load_config("qq-rss", None::<&str>, None::<&str>)?.0;
 
     let cookie_store = match File::open(&config.cookie_jar) {
@@ -44,11 +44,11 @@ pub fn get(thread_id: String, last_etag: Option<String>) -> Result<()> {
     let url = format!(
         "https://forum.questionablequesting.com/threads/{thread_id}/threadmarks.rss?category_id=1"
     );
-    let mut req = client.get(&url);
+    let req = client.get(&url);
     // Only bother setting etag the first time, just in case weird things happen
-    if let Some(etag) = last_etag {
-        req = req.header(IF_NONE_MATCH, etag);
-    }
+    // if let Some(etag) = last_etag {
+    //     req = req.header(IF_NONE_MATCH, etag);
+    // }
     let resp = req.send()?;
 
     if resp.status() == StatusCode::NOT_MODIFIED {
