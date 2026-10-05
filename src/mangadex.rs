@@ -20,7 +20,6 @@ const PAGE_SIZE: usize = 100;
 
 
 #[derive(Default, Debug, Clone, Deserialize)]
-#[serde(rename_all = "PascalCase")]
 struct MangaSyncerConfig {
     // Use the BlockedGroups field from manga-syncer
     #[serde(default)]
@@ -93,7 +92,6 @@ fn get_chapters(client: &Client, series: &str, title: &str) -> Result<Vec<Item>>
         let _span =
             error_span!("chapter_list", response = %String::from_utf8_lossy(&response)).entered();
 
-        println!("{}", String::from_utf8_lossy(&response));
         let page: ChapterList = serde_json::from_slice(&response)?;
 
 
